@@ -1,0 +1,480 @@
+left: 0;
+            width: 100%;
+            height: 100%;
+            background-si<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakura Days - 恋愛シミュレーション</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: M PLUS Rounded 1c for a soft, novel-like appearance -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #111;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Game Container keeping 16:9 Aspect Ratio */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1280px;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        @media (max-width: 768px) {
+            #game-container {
+                aspect-ratio: auto;
+                height: 100vh;
+            }
+        }
+
+        /* Background Layer */
+        #bg-layer {
+            position: absolute;
+            top: 0;ze: cover;
+            background-position: center;
+            transition: background 1.5s ease-in-out, opacity 1s ease-in-out;
+        }
+
+        /* Character Layer with breathing animation */
+        #char-layer {
+            position: absolute;
+            bottom: -5%;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 85%;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+            animation: breathe 4s infinite ease-in-out alternate;
+        }
+
+        @keyframes breathe {
+            0% { transform: translateX(-50%) scaleY(1); }
+            100% { transform: translateX(-50%) scaleY(1.02) translateY(-1%); }
+        }
+
+        /* Sakura Petals Animation */
+        .petal {
+            position: absolute;
+            background-color: #ffb7c5;
+            border-radius: 150% 0 150% 0;
+            animation: fall linear infinite;
+            opacity: 0.8;
+            pointer-events: none;
+            box-shadow: 0 0 5px rgba(255, 183, 197, 0.5);
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(720deg) translateX(20px); opacity: 0; }
+        }
+
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            pointer-events: none; /* Let clicks pass through except on interactive elements */
+        }
+
+        /* Text Box styling */
+        #text-box-container {
+            margin: 20px;
+            padding: 24px;
+            background: rgba(20, 20, 30, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            pointer-events: auto;
+            cursor: pointer;
+            position: relative;
+            min-height: 180px;
+            transition: opacity 0.3s;
+        }
+
+        #speaker-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffb7c5;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            letter-spacing: 0.05em;
+        }
+
+        #dialogue-text {
+            font-size: 1.25rem;
+            color: #ffffff;
+            line-height: 1.8;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Blinking next indicator */
+        #next-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 24px;
+            color: #fff;
+            font-size: 1.2rem;
+            animation: blink 1s infinite;
+            display: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Choices Menu */
+        #choices-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 80%;
+            max-width: 600px;
+            pointer-events: auto;
+            z-index: 50;
+        }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 16px 24px;
+            border-radius: 999px;
+            font-size: 1.25rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid #ffb7c5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .choice-btn:hover {
+            background: #ffb7c5;
+            color: #fff;
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 183, 197, 0.4);
+        }
+
+        /* Screen Click Catcher */
+        #click-catcher {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Sakura Effect Container -->
+        <div id="sakura-container" class="absolute inset-0 overflow-hidden z-0 pointer-events-none"></div>
+
+        <!-- Background -->
+        <div id="bg-layer"></div>
+
+        <!-- Character Sprite -->
+        <img id="char-layer" src="" alt="Character">
+
+        <!-- Click Catcher for advancing text -->
+        <div id="click-catcher"></div>
+
+        <!-- Choices UI -->
+        <div id="choices-menu" class="hidden"></div>
+
+        <!-- Dialogue UI -->
+        <div id="ui-layer" class="z-20">
+            <div id="text-box-container">
+                <div id="speaker-name"></div>
+                <div id="dialogue-text"></div>
+                <div id="next-indicator">▼</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Story Data ---
+        // Nodes represent different scenes or dialogue lines.
+        const story = {
+            "start": {
+                bg: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", // Spring sky
+                speaker: "",
+                text: "春。桜が舞い散る季節。\n今日からいよいよ、高校2年生の生活が始まる。",
+                char: null,
+                next: "scene2"
+            },
+            "scene2": {
+                bg: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+                speaker: "",
+                text: "新しいクラス、どんな奴がいるかな……\n期待と少しの不安を抱えながら、見慣れた通学路を歩く。",
+                char: null,
+                next: "scene3"
+            },
+            "scene3": {
+                bg: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)", // School corridor / bright
+                speaker: "葵 (Aoi)",
+                // Using placehold.co to generate a character placeholder
+                char: "https://placehold.co/400x700/fff0f5/ff69b4?text=Aoi%0A(Normal)&font=montserrat",
+                text: "あ、おはよう！",
+                next: "scene4"
+            },
+            "scene4": {
+                bg: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
+                speaker: "葵 (Aoi)",
+                char: "https://placehold.co/400x700/fff0f5/ff1493?text=Aoi%0A(Smile)&font=montserrat",
+                text: "ふふっ、クラス表見た？\n今年もまた同じクラスだね！よろしく！",
+                next: "scene5"
+            },
+            "scene5": {
+                bg: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
+                speaker: "葵 (Aoi)",
+                char: "https://placehold.co/400x700/fff0f5/ff69b4?text=Aoi%0A(Blush)&font=montserrat",
+                text: "そういえばさ……\n今日の放課後、一緒に帰らない？",
+                choices: [
+                    { text: "もちろん！一緒に帰ろう。", next: "choice_yes" },
+                    { text: "ごめん、今日は部活があるんだ。", next: "choice_no" }
+                ]
+            },
+            "choice_yes": {
+                bg: "linear-gradient(to top, #ff0844 0%, #ffb199 100%)", // Sunset
+                speaker: "葵 (Aoi)",
+                char: "https://placehold.co/400x700/fff0f5/ff1493?text=Aoi%0A(Joy)&font=montserrat",
+                text: "ほんと！？やったー！\nじゃあ、放課後、昇降口で待ってるね！",
+                next: "end"
+            },
+            "choice_no": {
+                bg: "linear-gradient(to top, #ff0844 0%, #ffb199 100%)", // Sunset
+                speaker: "葵 (Aoi)",
+                char: "https://placehold.co/400x700/fff0f5/808080?text=Aoi%0A(Sad)&font=montserrat",
+                text: "そっか……うん、わかった！\n部活、頑張ってね！また明日！",
+                next: "end"
+            },
+            "end": {
+                bg: "#000",
+                speaker: "",
+                text: "【プロローグ 終了】\nプレイありがとうございました。",
+                char: null,
+                next: null
+            }
+        };
+
+        // --- Game Engine Variables ---
+        let currentNode = "start";
+        let isTyping = false;
+        let typeInterval;
+        let currentFullText = "";
+        let isWaitingForChoice = false;
+
+        // --- DOM Elements ---
+        const bgLayer = document.getElementById('bg-layer');
+        const charLayer = document.getElementById('char-layer');
+        const speakerName = document.getElementById('speaker-name');
+        const dialogueText = document.getElementById('dialogue-text');
+        const nextIndicator = document.getElementById('next-indicator');
+        const choicesMenu = document.getElementById('choices-menu');
+        const clickCatcher = document.getElementById('click-catcher');
+        const textBoxContainer = document.getElementById('text-box-container');
+
+        // --- Core Functions ---
+
+        function startGame() {
+            createSakura();
+            renderNode(currentNode);
+        }
+
+        function renderNode(nodeId) {
+            if (!nodeId || !story[nodeId]) return;
+            
+            const node = story[nodeId];
+            isWaitingForChoice = false;
+            choicesMenu.innerHTML = '';
+            choicesMenu.classList.add('hidden');
+            nextIndicator.style.display = 'none';
+
+            // Background update
+            if (node.bg) {
+                bgLayer.style.background = node.bg;
+            }
+
+            // Character update
+            if (node.char) {
+                charLayer.src = node.char;
+                charLayer.style.opacity = 1;
+            } else {
+                charLayer.style.opacity = 0;
+            }
+
+            // Speaker update
+            if (node.speaker) {
+                speakerName.innerText = node.speaker;
+                speakerName.style.display = 'block';
+            } else {
+                speakerName.style.display = 'none';
+            }
+
+            // UI visibility
+            if (nodeId === 'end') {
+                textBoxContainer.style.background = 'transparent';
+                textBoxContainer.style.border = 'none';
+                textBoxContainer.style.boxShadow = 'none';
+                dialogueText.style.textAlign = 'center';
+            }
+
+            // Text typing effect
+            startTyping(node.text, () => {
+                if (node.choices) {
+                    showChoices(node.choices);
+                } else {
+                    nextIndicator.style.display = node.next ? 'block' : 'none';
+                }
+            });
+        }
+
+        function startTyping(text, callback) {
+            isTyping = true;
+            currentFullText = text;
+            dialogueText.innerHTML = '';
+            let i = 0;
+            
+            clearInterval(typeInterval);
+            typeInterval = setInterval(() => {
+                // Handle newlines
+                if (text.charAt(i) === '\n') {
+                    dialogueText.innerHTML += '<br>';
+                } else {
+                    dialogueText.innerHTML += text.charAt(i);
+                }
+                
+                i++;
+                if (i >= text.length) {
+                    clearInterval(typeInterval);
+                    isTyping = false;
+                    if (callback) callback();
+                }
+            }, 50); // Typing speed
+        }
+
+        function completeTyping() {
+            clearInterval(typeInterval);
+            isTyping = false;
+            dialogueText.innerHTML = currentFullText.replace(/\n/g, '<br>');
+            
+            const node = story[currentNode];
+            if (node.choices) {
+                showChoices(node.choices);
+            } else {
+                nextIndicator.style.display = node.next ? 'block' : 'none';
+            }
+        }
+
+        function showChoices(choices) {
+            isWaitingForChoice = true;
+            choicesMenu.innerHTML = '';
+            
+            choices.forEach((choice, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'choice-btn';
+                btn.innerText = choice.text;
+                // Add staggered animation
+                btn.style.opacity = '0';
+                btn.style.transform = 'translateY(20px)';
+                btn.style.transition = 'all 0.4s ease ' + (index * 0.1) + 's';
+                
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    currentNode = choice.next;
+                    renderNode(currentNode);
+                };
+                
+                choicesMenu.appendChild(btn);
+            });
+            
+            choicesMenu.classList.remove('hidden');
+            
+            // Trigger animation
+            setTimeout(() => {
+                const btns = document.querySelectorAll('.choice-btn');
+                btns.forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.style.transform = 'translateY(0)';
+                });
+            }, 50);
+        }
+
+        function advanceStory() {
+            if (isTyping) {
+                completeTyping();
+            } else if (!isWaitingForChoice) {
+                const node = story[currentNode];
+                if (node && node.next) {
+                    currentNode = node.next;
+                    renderNode(currentNode);
+                }
+            }
+        }
+
+        // --- Background Effects ---
+        function createSakura() {
+            const container = document.getElementById('sakura-container');
+            const petalCount = 30; // Amount of petals
+
+            for (let i = 0; i < petalCount; i++) {
+                createPetal(container);
+            }
+        }
+
+        function createPetal(container) {
+            const petal = document.createElement('div');
+            petal.classList.add('petal');
+            
+            // Random properties
+            const size = Math.random() * 10 + 10; // 10px to 20px
+            const left = Math.random() * 100; // 0% to 100%
+            const duration = Math.random() * 5 + 5; // 5s to 10s
+            const delay = Math.random() * 10; // 0s to 10s
+            
+            petal.style.width = `${size}px`;
+            petal.style.height = `${size * 0.6}px`;
+            petal.style.left = `${left}%`;
+            petal.style.animationDuration = `${duration}s`;
+            petal.style.animationDelay = `-${delay}s`;
+
+            container.appendChild(petal);
+        }
+
+        // --- Event Listeners ---
+        clickCatcher.addEventListener('click', advanceStory);
+        textBoxContainer.addEventListener('click', advanceStory);
+
+        // Start game on load
+        window.onload = startGame;
+
+    </script>
+</body>
+</html>
