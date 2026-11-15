@@ -1,7 +1,4 @@
-left: 0;
-            width: 100%;
-            height: 100%;
-            background-si<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -46,7 +43,11 @@ left: 0;
         /* Background Layer */
         #bg-layer {
             position: absolute;
-            top: 0;ze: cover;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
             background-position: center;
             transition: background 1.5s ease-in-out, opacity 1s ease-in-out;
         }
@@ -214,6 +215,7 @@ left: 0;
                 <div id="speaker-name"></div>
                 <div id="dialogue-text"></div>
                 <div id="next-indicator">▼</div>
+                <button id="restart-btn" type="button" class="hidden mt-4 rounded-lg border border-pink-200 px-4 py-2 text-pink-100">最初から読む</button>
             </div>
         </div>
     </div>
@@ -300,6 +302,7 @@ left: 0;
         const choicesMenu = document.getElementById('choices-menu');
         const clickCatcher = document.getElementById('click-catcher');
         const textBoxContainer = document.getElementById('text-box-container');
+        const restartBtn = document.getElementById('restart-btn');
 
         // --- Core Functions ---
 
@@ -316,6 +319,7 @@ left: 0;
             choicesMenu.innerHTML = '';
             choicesMenu.classList.add('hidden');
             nextIndicator.style.display = 'none';
+            restartBtn.classList.add('hidden');
 
             // Background update
             if (node.bg) {
@@ -344,6 +348,12 @@ left: 0;
                 textBoxContainer.style.border = 'none';
                 textBoxContainer.style.boxShadow = 'none';
                 dialogueText.style.textAlign = 'center';
+                restartBtn.classList.remove('hidden');
+            } else {
+                textBoxContainer.style.background = '';
+                textBoxContainer.style.border = '';
+                textBoxContainer.style.boxShadow = '';
+                dialogueText.style.textAlign = '';
             }
 
             // Text typing effect
@@ -471,6 +481,11 @@ left: 0;
         // --- Event Listeners ---
         clickCatcher.addEventListener('click', advanceStory);
         textBoxContainer.addEventListener('click', advanceStory);
+        restartBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentNode = 'start';
+            renderNode(currentNode);
+        });
 
         // Start game on load
         window.onload = startGame;
